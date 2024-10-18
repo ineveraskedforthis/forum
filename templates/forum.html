@@ -1,0 +1,30 @@
+{{define "FORUM"}}
+<div class="header">
+Status
+</div>
+
+<div class="message control">
+    {{template "NEW_THREAD"}}
+</div>
+
+<div class="thread">
+    {{range .Threads}}
+        <div class="main-post">
+            <div class="header">
+                <a href="/thread/{{printf "%d" .MainPost.PostId}}">
+                {{printf "%s" ((index $.DB.Posts .MainPost.PostId).Title) }}
+                </a>
+            </div>
+
+            <div class="content">
+                {{printf "%s" ((index $.DB.Posts .MainPost.PostId).Content) }}
+            </div>
+        </div>
+
+        {{range .Posts}}
+            {{template "POST" (index $.DB.Posts .PostId)}}
+        {{end}}
+    {{end}}
+</div>
+
+{{end}}

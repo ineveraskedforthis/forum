@@ -1,0 +1,54 @@
+
+
+.header {
+    top: 0%;
+    height: 1em;
+    width: 100%;
+    background-color: lightblue;
+}
+
+.main-post {
+    min-height: 5em;
+    background-color: ivory;
+
+
+    margin-left: 20%;
+    margin-right: 40%;
+    margin-top: 1em;
+    margin-bottom: 1em;
+
+    box-shadow: 0.1em 0.1em 0.1em 0.1em lightblue;
+
+    width: 40%;
+}
+
+.post {
+    min-height: 5em;
+    background-color: ivory;
+
+
+    margin-left: 30%;
+    margin-right: 30%;
+    margin-top: 1em;
+    margin-bottom: 1em;
+
+    box-shadow: 0.1em 0.1em 0.1em 0.1em lightblue;
+
+    width: 40%;
+}
+
+.content{
+    padding: 1em;
+}
+
+.new_post {
+    min-height: 5em;
+    background-color: ivory;
+
+    margin-left: 30%;
+    margin-right: 30%;
+
+    width: 40%;
+
+    box-shadow: 0.1em 0.1em 0.1em 0.1em lightblue;
+}

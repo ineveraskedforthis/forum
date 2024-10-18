@@ -1,0 +1,19 @@
+{{define "THREAD"}}
+
+<script src="../js/main.js"></script>
+
+<div class="header">
+    Status
+</div>
+
+<div class="thread">
+    {{range .Thread}}
+        {{template "POST" (index $.DB.Posts .PostId)}}
+    {{end}}
+</div>
+
+<div class="message control">
+    {{template "NEW_POST" (index .Thread 0)}}
+</div>
+
+{{end}}

@@ -1,0 +1,10 @@
+{{define "NEW_POST"}}
+<div class="new_post">
+    <h1>Create new post</h1>
+    <form action="/create_post/{{printf "%d" .PostId}}" method="POST" type='button' id='new_post_button'>
+        <div><textarea name="title" rows="1" cols="80">Title</textarea></div>
+        <div><textarea name="body" rows="20" cols="80">Post message</textarea></div>
+        <div><input type="submit" value="Submit"></div>
+    </form>
+</div>
+{{end}}

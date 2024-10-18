@@ -1,0 +1,10 @@
+{{define "NEW_THREAD"}}
+<div class="new_post">
+    <h1>Start new thread</h1>
+    <form action="/create_thread/" method="POST" type='button' id='new_post_button'>
+        <div><textarea name="title" rows="1" cols="80">Title</textarea></div>
+        <div><textarea name="body" rows="20" cols="80">Post message</textarea></div>
+        <div><input type="submit" value="Submit"></div>
+    </form>
+</div>
+{{end}}
