@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"regexp"
 	"strconv"
+	"time"
 )
 
 type PostId struct {
@@ -17,6 +18,7 @@ type Post struct {
 	Id      PostId
 	Thread  PostId
 	Title   string
+	Date    time.Time
 	Content []byte
 }
 
@@ -32,8 +34,12 @@ type ThreadPreview struct {
 }
 
 type ForumView struct {
-	Threads []ThreadPreview
-	DB      *Database
+	Threads      []ThreadPreview
+	ThreadsCount int
+	PostsCount   int
+	CurrentTime  string
+	LastPostTime string
+	DB           *Database
 }
 
 type ThreadView struct {
@@ -48,7 +54,7 @@ func (d *Database) newId() PostId {
 }
 
 func (d *Database) newPost(thread PostId, title string, body []byte) PostId {
-	var post = Post{d.newId(), thread, title, body}
+	var post = Post{d.newId(), thread, title, time.Now(), body}
 	d.Posts = append(d.Posts, post)
 	fmt.Print(post.Id)
 	print("\n")
@@ -57,7 +63,7 @@ func (d *Database) newPost(thread PostId, title string, body []byte) PostId {
 
 func (d *Database) newThread(title string, body []byte) PostId {
 	var new_id = d.newId()
-	var post = Post{new_id, new_id, title, body}
+	var post = Post{new_id, new_id, title, time.Now(), body}
 	d.Posts = append(d.Posts, post)
 	d.Threads = append(d.Threads, post.Id)
 	fmt.Print(post.Id)
@@ -151,6 +157,9 @@ func handleViewForum(d *Database, w http.ResponseWriter, r *http.Request) {
 
 	var f ForumView
 	f.DB = d
+	f.ThreadsCount = len(d.Threads)
+	f.PostsCount = len(d.Posts)
+	f.CurrentTime = time.Now().Format("2006-01-02 15:04:05")
 
 	var postToIndex map[uint32]uint32 = make(map[uint32]uint32)
 
@@ -163,9 +172,15 @@ func handleViewForum(d *Database, w http.ResponseWriter, r *http.Request) {
 
 	fmt.Print(postToIndex)
 
+	var lastPostTime = time.Unix(0, 0)
+
 	for i := 0; i < len(d.Posts); i++ {
 		var threadPostId = d.Posts[i].Thread
 		var index = postToIndex[threadPostId.PostId]
+
+		if lastPostTime.Before(d.Posts[i].Date) {
+			lastPostTime = d.Posts[i].Date
+		}
 
 		if f.Threads[index].MainPost == d.Posts[i].Id {
 			continue
@@ -177,6 +192,8 @@ func handleViewForum(d *Database, w http.ResponseWriter, r *http.Request) {
 
 		f.Threads[index].Posts = append(f.Threads[index].Posts, d.Posts[i].Id)
 	}
+
+	f.LastPostTime = lastPostTime.Format("2006-01-02 15:04:05")
 
 	t.ExecuteTemplate(w, "FORUM", f)
 }

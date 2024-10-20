@@ -1,44 +1,78 @@
-
+body {
+    margin: 0%;
+}
 
 .header {
-    top: 0%;
-    height: 1em;
-    width: 100%;
+    display: flex;
+    flex-direction: row;
+    border-width: 1px;
+    border-style: solid;
+    border-radius: 10px;
+    background-color:navajowhite;
+}
+.header > div {
+    flex: 1;
+    padding-left: 2vw;
+}
+
+
+.footer {
+    position: absolute;
+    bottom: 0%;
+    height: 5vh;
+    width: 100vw;
     background-color: lightblue;
+    margin: 0%;
+    padding: 0%;
+    display: flex;
+    flex-direction: row;
+}
+
+.footer > div {
+    flex: 1;
+    padding: 0.5vw;
+}
+
+.page-content {
+    top: 0%;
+    height: 94vh;
+    overflow-y: scroll;
 }
 
 .main-post {
     min-height: 5em;
-    background-color: ivory;
-
 
     margin-left: 20%;
     margin-right: 40%;
     margin-top: 1em;
     margin-bottom: 1em;
 
-    box-shadow: 0.1em 0.1em 0.1em 0.1em lightblue;
+    /* box-shadow: 0.1em 0.1em 0.1em 0.1em lightblue; */
 
     width: 40%;
 }
 
 .post {
     min-height: 5em;
-    background-color: ivory;
-
 
     margin-left: 30%;
     margin-right: 30%;
     margin-top: 1em;
     margin-bottom: 1em;
 
-    box-shadow: 0.1em 0.1em 0.1em 0.1em lightblue;
+    /* box-shadow: 0.1em 0.1em 0.1em 0.1em lightblue; */
 
     width: 40%;
 }
 
 .content{
     padding: 1em;
+    border-width: 1px;
+    border-style: solid;
+
+    min-height: 5vh;
+
+    background-color: ivory;
 }
 
 .new_post {
