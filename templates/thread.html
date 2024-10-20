@@ -1,19 +1,14 @@
 {{define "THREAD"}}
 
 <script src="../js/main.js"></script>
+<div class="pl-8 pt-8">
+  <div class="header">Status</div>
 
-<div class="header">
-    Status
-</div>
+  <div class="thread p-2 mb-4">
+    {{range .Thread}} {{template "POST" (index $.DB.Posts .PostId)}} {{end}}
+  </div>
 
-<div class="thread">
-    {{range .Thread}}
-        {{template "POST" (index $.DB.Posts .PostId)}}
-    {{end}}
-</div>
-
-<div class="message control">
-    {{template "NEW_POST" (index .Thread 0)}}
+  <div class="message control">{{template "NEW_POST" (index .Thread 0)}}</div>
 </div>
 
 {{end}}
