@@ -177,6 +177,8 @@ func transformBody(body []byte, id PostId, d *Database) []PostContent {
 			result_body = append(result_body, PostContent{make([]byte, 0), replies[i].post, thread})
 			copyFrom = replies[i].end + 1
 		}
+
+		result_body = append(result_body, PostContent{body[copyFrom:], invalidId, invalidId})
 	}
 
 	return result_body
