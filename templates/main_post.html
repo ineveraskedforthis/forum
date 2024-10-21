@@ -1,0 +1,18 @@
+{{define "MAINPOST"}}
+
+<div class="main-post max-w-fit mb-4 bg-zinc-200 rounded-2xl p-2 px-4">
+    <div class="header flex gap-1">
+        <div class="title">
+            <a href="/thread/{{.Id.PostId}}">
+                Thread {{printf "%s" .Title}}
+            </a>
+        </div>
+        <div class="date">{{.Date.Format "Jan 02, 2006 15:04:05 UTC"}}</div>
+    </div>
+
+    <div class="content">
+        {{printf "%s" .Content}}
+    </div>
+</div>
+
+{{end}}

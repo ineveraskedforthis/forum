@@ -43,8 +43,9 @@ type ForumView struct {
 }
 
 type ThreadView struct {
-	Thread []PostId
-	DB     *Database
+	MainPost PostId
+	Thread   []PostId
+	DB       *Database
 }
 
 func (d *Database) newId() PostId {
@@ -107,6 +108,7 @@ func handleViewThread(d *Database, w http.ResponseWriter, r *http.Request, threa
 	}
 
 	t, error := template.ParseFiles(
+		"templates/main_post.html",
 		"templates/post.html",
 		"templates/create_post.html",
 		"templates/thread.html",
@@ -118,12 +120,15 @@ func handleViewThread(d *Database, w http.ResponseWriter, r *http.Request, threa
 
 	th.DB = d
 
-	for i := 0; i < len(d.Posts); i++ {
+	for i := 1; i < len(d.Posts); i++ {
 		var post = th.DB.Posts[i]
 		if post.Thread == thread {
 			th.Thread = append(th.Thread, post.Id)
 		}
 	}
+
+	th.MainPost = th.Thread[0]
+	th.Thread = th.Thread[1:]
 
 	t.ExecuteTemplate(w, "THREAD", th)
 }
@@ -148,6 +153,7 @@ func handleViewForum(d *Database, w http.ResponseWriter, r *http.Request) {
 	}
 
 	t, error := template.ParseFiles(
+		"templates/main_post.html",
 		"templates/post.html",
 		"templates/create_thread.html",
 		"templates/forum.html",
