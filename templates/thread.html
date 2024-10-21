@@ -10,11 +10,11 @@
   <a href="/forum" class="bg-black rounded-full text-white font-semibold py-2 px-4 rounded hover:bg-green-400">Back to forum</a>
 
   </div>
-  {{template "MAINPOST" (index $.DB.Posts .MainPost.PostId)}}
+  {{template "MAINPOST" .MainPost}}
   <div class="thread p-2 mb-4">
-    {{range .Thread}} {{template "POST" (index $.DB.Posts .PostId)}} {{end}}
+    {{range .Thread}} {{template "POST" .}} {{end}}
   </div>
-  <div class="message control">{{template "NEW_POST" (index .Thread 0)}}</div>
+  <div class="message control">{{template "NEW_POST" .MainPost.Id}}</div>
 </div>
 
 {{end}}

@@ -7,9 +7,9 @@
 
     <div class="thread p-2">
         {{range .Threads}}
-        {{template "MAINPOST" (index $.DB.Posts .MainPost.PostId)}}
+        {{template "MAINPOST" .MainPost}}
         {{range .Posts}}
-        {{template "POST" (index $.DB.Posts .PostId)}}
+        {{template "POST" .}}
         {{end}}
         {{end}}
     </div>
