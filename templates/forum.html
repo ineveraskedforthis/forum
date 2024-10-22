@@ -7,23 +7,9 @@
 
     <div class="thread p-2">
         {{range .Threads}}
-        <div class="main-post max-w-fit mb-4 bg-zinc-200 rounded-2xl p-2 px-4">
-            <div class="header flex gap-1">
-                <div class="title">
-                    <a href="/thread/{{.MainPost.PostId}}">
-                        {{printf "%s" ((index $.DB.Posts .MainPost.PostId).Title) }}
-                    </a>
-                </div>
-                <div class="date">{{(index $.DB.Posts .MainPost.PostId).Date.Format "Jan 02, 2006 15:04:05 UTC"}}</div>
-            </div>
-
-            <div class="content">
-                {{printf "%s" ((index $.DB.Posts .MainPost.PostId).Content) }}
-            </div>
-        </div>
-
+        {{template "MAINPOST" .MainPost}}
         {{range .Posts}}
-        {{template "POST" (index $.DB.Posts .PostId)}}
+        {{template "POST" .}}
         {{end}}
         {{end}}
     </div>

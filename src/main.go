@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"log"
+	"math"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -14,23 +15,49 @@ type PostId struct {
 	PostId uint32
 }
 
+type ReplyData struct {
+	LinkTo       PostId
+	LinkToThread PostId
+}
+
+type PostContent struct {
+	Text         []byte
+	LinkTo       PostId
+	LinkToThread PostId
+}
+
 type Post struct {
 	Id      PostId
 	Thread  PostId
 	Title   string
 	Date    time.Time
-	Content []byte
+	Content []PostContent
+}
+
+type PostView struct {
+	Id      PostId
+	Thread  PostId
+	Title   string
+	Date    time.Time
+	Content []PostContent
+	Replies []ReplyData
+}
+
+type ReplyLink struct {
+	target PostId
+	reply  PostId
 }
 
 type Database struct {
 	UniqueId uint32
 	Posts    []Post
 	Threads  []PostId
+	Replies  []ReplyLink
 }
 
 type ThreadPreview struct {
-	MainPost PostId
-	Posts    []PostId
+	MainPost PostView
+	Posts    []PostView
 }
 
 type ForumView struct {
@@ -43,8 +70,9 @@ type ForumView struct {
 }
 
 type ThreadView struct {
-	Thread []PostId
-	DB     *Database
+	MainPost PostView
+	Thread   []PostView
+	DB       *Database
 }
 
 func (d *Database) newId() PostId {
@@ -53,21 +81,127 @@ func (d *Database) newId() PostId {
 	return new_id
 }
 
+var reply_string = []byte(">>")
+var space = []byte(" ")
+
+type ReplyMark struct {
+	start int
+	end   int
+	post  PostId
+}
+
+var emptyTemplate = template.HTML("")
+
+var invalidId = PostId{math.MaxUint32}
+
+func transformBody(body []byte, id PostId, d *Database) []PostContent {
+	replies := make([]ReplyMark, 0)
+
+	// we are looking for reply string
+	// and parse the numbers after it
+	// if we are able to parse them into valid post,
+	// then replace it with a link
+
+	repliesSet := make(map[PostId]bool)
+
+	for i := 0; i < len(body); i++ {
+		// print(i)
+
+		replyCandidateFound := true
+		for j := 0; j < len(reply_string); j++ {
+			// print(j)
+
+			if i+j >= len(body) {
+				// print("too long")
+				replyCandidateFound = false
+				break
+			}
+
+			if body[i+j] != reply_string[j] {
+				// print("wrong symbol")
+				replyCandidateFound = false
+			}
+		}
+
+		// print(replyCandidateFound)
+
+		if replyCandidateFound {
+			number := body[i+len(reply_string) : min(len(body), i+len(reply_string)+20)]
+
+			result := -1
+
+			distance := 0
+
+			for j := 0; j < len(number); j++ {
+				if '0' <= number[j] && number[j] <= '9' {
+					if result == -1 {
+						result = 0
+					}
+					result = result*10 + int(number[j]) - '0'
+					distance = j
+				} else {
+					break
+				}
+			}
+
+			if result != -1 {
+				potentialId := uint32(result)
+
+				if d.UniqueId > potentialId {
+
+					if repliesSet[PostId{potentialId}] == false {
+						d.Replies = append(d.Replies, ReplyLink{PostId{potentialId}, id})
+					}
+
+					repliesSet[PostId{potentialId}] = true
+					mark := ReplyMark{i, i + distance + len(reply_string), PostId{potentialId}}
+					replies = append(replies, mark)
+				}
+			}
+		}
+	}
+
+	result_body := make([]PostContent, 0)
+
+	if len(replies) == 0 {
+		result_body = append(result_body, PostContent{body, invalidId, invalidId})
+	} else {
+		copyFrom := 0
+		copyUntil := 0
+
+		for i := 0; i < len(replies); i++ {
+			copyUntil = replies[i].start
+			result_body = append(result_body, PostContent{body[copyFrom:copyUntil], invalidId, invalidId})
+
+			thread := d.Posts[replies[i].post.PostId].Thread
+			result_body = append(result_body, PostContent{make([]byte, 0), replies[i].post, thread})
+			copyFrom = replies[i].end + 1
+		}
+
+		result_body = append(result_body, PostContent{body[copyFrom:], invalidId, invalidId})
+	}
+
+	return result_body
+}
+
 func (d *Database) newPost(thread PostId, title string, body []byte) PostId {
-	var post = Post{d.newId(), thread, title, time.Now(), body}
+	// validate that post is a thread
+	var threadOpPost = d.Posts[thread.PostId]
+	if threadOpPost.Thread != thread {
+		return thread
+	}
+	id := d.newId()
+	var post = Post{id, thread, title, time.Now(), transformBody(body, id, d)}
 	d.Posts = append(d.Posts, post)
-	fmt.Print(post.Id)
-	print("\n")
+
 	return post.Id
 }
 
 func (d *Database) newThread(title string, body []byte) PostId {
 	var new_id = d.newId()
-	var post = Post{new_id, new_id, title, time.Now(), body}
+	var post = Post{new_id, new_id, title, time.Now(), transformBody(body, new_id, d)}
 	d.Posts = append(d.Posts, post)
 	d.Threads = append(d.Threads, post.Id)
-	fmt.Print(post.Id)
-	print("\n")
 	return new_id
 }
 
@@ -79,13 +213,15 @@ func createDatabase() Database {
 }
 
 func generatePosts(d *Database) {
-	var thread1 = d.newThread("aaaaa1", []byte("bbbbb1"))
-	d.newPost(thread1, "aaaaa2", []byte("bbbbb2"))
-	d.newPost(thread1, "aaaaa3", []byte("bbbbb3"))
-	d.newPost(thread1, "aaaaa4", []byte("bbbbb4"))
+	d.newThread("aaaaa1", []byte("a"))
+	// d.newPost(thread1, "aaaaa2", []byte("bbbbb2"))
+	// d.newPost(thread1, "aaaaa3", []byte("bbbbb3"))
+	// d.newPost(thread1, "aaaaa4", []byte("bbbbb4"))
 
-	d.newThread("aaaaa13", []byte("bbbbb13"))
-	d.newThread("aaaaa13", []byte("bbbbb31"))
+	// d.newThread("aaaaa13", []byte("bbbbb13"))
+	// d.newThread("aaaaa13", []byte("bbbbb31"))
+
+	d.newThread("aaaaa13", []byte(">>0"))
 }
 
 func handleCreatePost(d *Database, w http.ResponseWriter, r *http.Request, thread PostId) {
@@ -99,31 +235,54 @@ func handleCreatePost(d *Database, w http.ResponseWriter, r *http.Request, threa
 }
 
 func handleViewThread(d *Database, w http.ResponseWriter, r *http.Request, thread PostId) {
-	fmt.Print("request view\n")
-
 	{
 		css, _ := template.ParseFiles("templates/cssjs.html")
 		css.Execute(w, 0)
 	}
 
 	t, error := template.ParseFiles(
+		"templates/post_link.html",
+		"templates/main_post.html",
 		"templates/post.html",
 		"templates/create_post.html",
 		"templates/thread.html",
 	)
 
-	fmt.Print(error)
+	if error != nil {
+		fmt.Print(error)
+	}
 
 	var th ThreadView
 
 	th.DB = d
 
+	th.Thread = make([]PostView, 0)
+
 	for i := 0; i < len(d.Posts); i++ {
 		var post = th.DB.Posts[i]
 		if post.Thread == thread {
-			th.Thread = append(th.Thread, post.Id)
+			postView := PostView{
+				post.Id, post.Thread, post.Title, post.Date, post.Content, make([]ReplyData, 0),
+			}
+			th.Thread = append(th.Thread, postView)
 		}
 	}
+
+	repliesTo := make(map[PostId][]ReplyData)
+
+	for i := 0; i < len(d.Replies); i++ {
+		var reply = d.Replies[i]
+		var replyThread = d.Posts[reply.reply.PostId].Thread
+		replyData := ReplyData{reply.reply, replyThread}
+		repliesTo[reply.target] = append(repliesTo[reply.target], replyData)
+	}
+
+	for i := 0; i < len(th.Thread); i++ {
+		th.Thread[i].Replies = append(th.Thread[i].Replies, repliesTo[th.Thread[i].Id]...)
+	}
+
+	th.MainPost = th.Thread[0]
+	th.Thread = th.Thread[1:]
 
 	t.ExecuteTemplate(w, "THREAD", th)
 }
@@ -138,22 +297,38 @@ func handleCreateThread(d *Database, w http.ResponseWriter, r *http.Request) {
 }
 
 func handleViewForum(d *Database, w http.ResponseWriter, r *http.Request) {
-	fmt.Print("request view\n")
-
 	{
 		css, error := template.ParseFiles("templates/cssjs.html")
 		css.Execute(w, 0)
 
-		fmt.Print(error)
+		if error != nil {
+			fmt.Print(error)
+		}
 	}
 
 	t, error := template.ParseFiles(
+		"templates/post_link.html",
+		"templates/main_post.html",
 		"templates/post.html",
 		"templates/create_thread.html",
 		"templates/forum.html",
 	)
 
-	fmt.Print(error)
+	if error != nil {
+		fmt.Print(error)
+	}
+
+	repliesTo := make(map[PostId][]ReplyData)
+
+	for i := 0; i < len(d.Replies); i++ {
+		var reply = d.Replies[i]
+		var replyThread = d.Posts[reply.reply.PostId].Thread
+		replyData := ReplyData{reply.reply, replyThread}
+		repliesTo[reply.target] = append(repliesTo[reply.target], replyData)
+	}
+
+	print("\n")
+	fmt.Print(repliesTo)
 
 	var f ForumView
 	f.DB = d
@@ -165,12 +340,16 @@ func handleViewForum(d *Database, w http.ResponseWriter, r *http.Request) {
 
 	for i := len(d.Threads) - 1; i >= 0; i-- {
 		var preview ThreadPreview
-		preview.MainPost = d.Threads[i]
+		post := d.Posts[d.Threads[i].PostId]
+		preview.MainPost = PostView{
+			post.Id, post.Thread, post.Title, post.Date, post.Content, make([]ReplyData, 0),
+		}
+
+		preview.MainPost.Replies = append(preview.MainPost.Replies, repliesTo[preview.MainPost.Id]...)
+
 		postToIndex[d.Threads[i].PostId] = uint32(len(d.Threads) - 1 - i)
 		f.Threads = append(f.Threads, preview)
 	}
-
-	fmt.Print(postToIndex)
 
 	var lastPostTime = time.Unix(0, 0)
 
@@ -182,15 +361,24 @@ func handleViewForum(d *Database, w http.ResponseWriter, r *http.Request) {
 			lastPostTime = d.Posts[i].Date
 		}
 
-		if f.Threads[index].MainPost == d.Posts[i].Id {
+		if f.Threads[index].MainPost.Id == d.Posts[i].Id {
 			continue
 		}
 
+		post := d.Posts[i]
+
+		f.Threads[index].Posts = append(f.Threads[index].Posts, PostView{
+			post.Id, post.Thread, post.Title, post.Date, post.Content, make([]ReplyData, 0),
+		})
 		if len(f.Threads[index].Posts) > 3 {
-			continue
+			f.Threads[index].Posts = f.Threads[index].Posts[1:]
 		}
+	}
 
-		f.Threads[index].Posts = append(f.Threads[index].Posts, d.Posts[i].Id)
+	for i := 0; i < len(f.Threads); i++ {
+		for j := 0; j < len(f.Threads[i].Posts); j++ {
+			f.Threads[i].Posts[j].Replies = append(f.Threads[i].Posts[j].Replies, repliesTo[f.Threads[i].Posts[j].Id]...)
+		}
 	}
 
 	f.LastPostTime = lastPostTime.Format("2006-01-02 15:04:05")
@@ -214,7 +402,9 @@ func main() {
 			return
 		}
 		raw_id, error := strconv.Atoi(m[2])
-		fmt.Print(error)
+		if error != nil {
+			fmt.Print(error)
+		}
 		handleViewThread(&d, w, r, PostId{uint32(raw_id)})
 	})
 	http.HandleFunc("/create_thread/", func(w http.ResponseWriter, r *http.Request) { handleCreateThread(&d, w, r) })
@@ -225,8 +415,9 @@ func main() {
 			return
 		}
 		raw_id, error := strconv.Atoi(m[2])
-		fmt.Print(error)
-		print(raw_id)
+		if error != nil {
+			fmt.Print(error)
+		}
 		handleCreatePost(&d, w, r, PostId{uint32(raw_id)})
 	})
 	http.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir("css"))))
