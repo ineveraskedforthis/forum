@@ -8,6 +8,6 @@ reply_buttons.forEach(function (item) {
             field = document.getElementById('new-thread-message-area');
         }
         if (field != null)
-            field.value = field.value + ">>" + id;
+            field.value = field.value + ">>" + id + " ";
     };
 });
