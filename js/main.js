@@ -7,6 +7,6 @@ reply_buttons.forEach(function (item) {
         if (field == null)
             alert("no message field");
         else
-            field.value = field.value + ">>" + id;
+            field.value = field.value + ">>" + id + " ";
     };
 });

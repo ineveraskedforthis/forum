@@ -8,6 +8,6 @@ reply_buttons.forEach((item) => {
         let field = document.getElementById('message-area') as HTMLTextAreaElement
         if (field == null) alert("no message field")
         else
-            field.value = field.value + ">>" + id
+            field.value = field.value + ">>" + id + " "
     }
 })

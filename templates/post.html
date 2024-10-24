@@ -1,18 +1,21 @@
 {{define "POST"}}
 
-<div class="post max-w-fit mb-4 ml-4 p-2 bg-zinc-100 rounded-2xl">
+<div class="post max-w-fit mb-2 ml-2 p-2 bg-zinc-100 rounded-2xl px-4">
   <div id="post-{{.Id.PostId}}">
     <div class="header flex gap-1">
+
+      {{ if .Title }}
+        <div class="title font-bold">{{ .Title }}</div>
+      {{ end }}
+
+      <div class="date">{{.Date.Format "Jan 02, 2006 15:04:05 UTC"}}</div>
       <a href="/thread/{{.Thread.PostId}}#post-{{.Id.PostId}}">
           #{{.Id.PostId}}
       </a>
-      <div class="title ">{{printf "%s" .Title}}</div>
-      <div class="date">{{.Date.Format "Jan 02, 2006 15:04:05 UTC"}}</div>
-
       <button id="reply-button-{{.Id.PostId}}" class="reply-button"> Reply </button>
     </div>
 
-    <div class="content">
+    <div class="content max-w-prose">
       {{range .Content}}
         {{printf "%s" .Text}}
         {{if lt .LinkTo.PostId 4294967295}}
@@ -21,8 +24,7 @@
       {{end}}
     </div>
 
-    <div class="replies">
-      Replies:
+    <div class="replies text-sm">
       {{range .Replies}}
         {{template "POSTREPLYLINK" .}}
       {{end}}
