@@ -7,6 +7,7 @@ import (
 	"math"
 	"net/http"
 	"regexp"
+	"sort"
 	"strconv"
 	"time"
 )
@@ -56,8 +57,9 @@ type Database struct {
 }
 
 type ThreadPreview struct {
-	MainPost PostView
-	Posts    []PostView
+	MainPost     PostView
+	Posts        []PostView
+	LastPostTime time.Time
 }
 
 type ForumView struct {
@@ -147,7 +149,7 @@ func transformBody(body []byte, id PostId, d *Database) []PostContent {
 			if result != -1 {
 				potentialId := uint32(result)
 
-				if d.UniqueId > potentialId {
+				if d.UniqueId > potentialId+1 {
 
 					if repliesSet[PostId{potentialId}] == false {
 						d.Replies = append(d.Replies, ReplyLink{PostId{potentialId}, id})
@@ -340,10 +342,13 @@ func handleViewForum(d *Database, w http.ResponseWriter, r *http.Request) {
 
 	for i := len(d.Threads) - 1; i >= 0; i-- {
 		var preview ThreadPreview
+
 		post := d.Posts[d.Threads[i].PostId]
 		preview.MainPost = PostView{
 			post.Id, post.Thread, post.Title, post.Date, post.Content, make([]ReplyData, 0),
 		}
+
+		preview.LastPostTime = post.Date
 
 		preview.MainPost.Replies = append(preview.MainPost.Replies, repliesTo[preview.MainPost.Id]...)
 
@@ -367,6 +372,10 @@ func handleViewForum(d *Database, w http.ResponseWriter, r *http.Request) {
 
 		post := d.Posts[i]
 
+		if post.Date.After(f.Threads[index].LastPostTime) {
+			f.Threads[index].LastPostTime = post.Date
+		}
+
 		f.Threads[index].Posts = append(f.Threads[index].Posts, PostView{
 			post.Id, post.Thread, post.Title, post.Date, post.Content, make([]ReplyData, 0),
 		})
@@ -380,6 +389,10 @@ func handleViewForum(d *Database, w http.ResponseWriter, r *http.Request) {
 			f.Threads[i].Posts[j].Replies = append(f.Threads[i].Posts[j].Replies, repliesTo[f.Threads[i].Posts[j].Id]...)
 		}
 	}
+
+	sort.Slice(f.Threads, func(i, j int) bool {
+		return f.Threads[i].LastPostTime.After(f.Threads[j].LastPostTime)
+	})
 
 	f.LastPostTime = lastPostTime.Format("2006-01-02 15:04:05")
 
