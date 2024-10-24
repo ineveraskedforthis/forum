@@ -107,33 +107,20 @@ func transformBody(body []byte, id PostId, d *Database) []PostContent {
 	repliesSet := make(map[PostId]bool)
 
 	for i := 0; i < len(body); i++ {
-		// print(i)
-
 		replyCandidateFound := true
 		for j := 0; j < len(reply_string); j++ {
-			// print(j)
-
 			if i+j >= len(body) {
-				// print("too long")
 				replyCandidateFound = false
 				break
 			}
-
 			if body[i+j] != reply_string[j] {
-				// print("wrong symbol")
 				replyCandidateFound = false
 			}
 		}
-
-		// print(replyCandidateFound)
-
 		if replyCandidateFound {
 			number := body[i+len(reply_string) : min(len(body), i+len(reply_string)+20)]
-
 			result := -1
-
 			distance := 0
-
 			for j := 0; j < len(number); j++ {
 				if '0' <= number[j] && number[j] <= '9' {
 					if result == -1 {
@@ -329,9 +316,6 @@ func handleViewForum(d *Database, w http.ResponseWriter, r *http.Request) {
 		repliesTo[reply.target] = append(repliesTo[reply.target], replyData)
 	}
 
-	print("\n")
-	fmt.Print(repliesTo)
-
 	var f ForumView
 	f.DB = d
 	f.ThreadsCount = len(d.Threads)
@@ -435,6 +419,27 @@ func main() {
 	})
 	http.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir("css"))))
 	http.Handle("/js/", http.StripPrefix("/js/", http.FileServer(http.Dir("js"))))
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		{
+			css, error := template.ParseFiles("templates/cssjs.html")
+			css.Execute(w, 0)
+
+			if error != nil {
+				fmt.Print(error)
+			}
+		}
+
+		t, error := template.ParseFiles(
+			"templates/main.html",
+		)
+
+		if error != nil {
+			fmt.Print(error)
+		}
+
+		t.Execute(w, 0)
+	})
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
