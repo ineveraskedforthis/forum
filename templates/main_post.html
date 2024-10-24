@@ -1,14 +1,17 @@
 {{define "MAINPOST"}}
 
-<div class="main-post max-w-fit mb-4 bg-zinc-200 rounded-2xl p-2 px-4">
+<div class="main-post border-green-400 border-l-2 max-w-fit mb-1.5 bg-zinc-100 rounded-2xl p-2 px-4">
   <div id="post-{{.Id.PostId}}" class="header flex gap-1">
-      <div class="title">
-          <a href="/thread/{{.Id.PostId}}">
-              #{{.Id.PostId}}
-          </a>
-      </div>
-      <div class="date">{{.Date.Format "Jan 02, 2006 15:04:05 UTC"}}</div>
+      {{ if .Title }}
+        <div class="title font-bold">{{ .Title }}</div>
+      {{ end }}
 
+      <div class="date">{{.Date.Format "Jan 02, 2006 15:04:05 UTC"}}</div>
+      <div class="title">
+        <a href="/thread/{{.Id.PostId}}">
+            #{{.Id.PostId}}
+        </a>
+      </div>
       <button id="reply-button-{{.Id.PostId}}" class="reply-button"> Reply </button>
   </div>
 
@@ -21,8 +24,8 @@
     {{end}}
   </div>
 
-  <div class="replies">
-    Replies:
+  <div class="replies text-sm">
+    
     {{range .Replies}}
       {{template "POSTREPLYLINK" .}}
     {{end}}

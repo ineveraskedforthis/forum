@@ -9,6 +9,6 @@ reply_buttons.forEach((item) => {
         if (field == null) {
             field = document.getElementById('new-thread-message-area') as HTMLTextAreaElement
         }
-        if (field != null) field.value = field.value + ">>" + id
+        if (field != null) field.value = field.value + ">>" + id + " "
     }
 })
