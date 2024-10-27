@@ -25,10 +25,14 @@
   </div>
 
   <div class="replies text-sm">
-    
+
     {{range .Replies}}
       {{template "POSTREPLYLINK" .}}
     {{end}}
+  </div>
+
+  <div class="info">
+    Amount of posts: {{.AmountOfPosts}}
   </div>
 </div>
 

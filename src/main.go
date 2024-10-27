@@ -44,6 +44,16 @@ type PostView struct {
 	Replies []ReplyData
 }
 
+type MainPostView struct {
+	Id            PostId
+	Thread        PostId
+	Title         string
+	Date          time.Time
+	Content       []PostContent
+	Replies       []ReplyData
+	AmountOfPosts uint32
+}
+
 type ReplyLink struct {
 	target PostId
 	reply  PostId
@@ -57,9 +67,10 @@ type Database struct {
 }
 
 type ThreadPreview struct {
-	MainPost     PostView
-	Posts        []PostView
-	LastPostTime time.Time
+	MainPost      MainPostView
+	Posts         []PostView
+	LastPostTime  time.Time
+	AmountOfPosts uint32
 }
 
 type ForumView struct {
@@ -72,7 +83,7 @@ type ForumView struct {
 }
 
 type ThreadView struct {
-	MainPost PostView
+	MainPost MainPostView
 	Thread   []PostView
 	DB       *Database
 }
@@ -247,6 +258,8 @@ func handleViewThread(d *Database, w http.ResponseWriter, r *http.Request, threa
 
 	th.Thread = make([]PostView, 0)
 
+	var count uint32 = 0
+
 	for i := 0; i < len(d.Posts); i++ {
 		var post = th.DB.Posts[i]
 		if post.Thread == thread {
@@ -254,6 +267,7 @@ func handleViewThread(d *Database, w http.ResponseWriter, r *http.Request, threa
 				post.Id, post.Thread, post.Title, post.Date, post.Content, make([]ReplyData, 0),
 			}
 			th.Thread = append(th.Thread, postView)
+			count++
 		}
 	}
 
@@ -270,7 +284,8 @@ func handleViewThread(d *Database, w http.ResponseWriter, r *http.Request, threa
 		th.Thread[i].Replies = append(th.Thread[i].Replies, repliesTo[th.Thread[i].Id]...)
 	}
 
-	th.MainPost = th.Thread[0]
+	temp := th.Thread[0]
+	th.MainPost = MainPostView{temp.Id, temp.Thread, temp.Title, temp.Date, temp.Content, temp.Replies, count}
 	th.Thread = th.Thread[1:]
 
 	t.ExecuteTemplate(w, "THREAD", th)
@@ -327,9 +342,11 @@ func handleViewForum(d *Database, w http.ResponseWriter, r *http.Request) {
 	for i := len(d.Threads) - 1; i >= 0; i-- {
 		var preview ThreadPreview
 
+		preview.AmountOfPosts = 0
+
 		post := d.Posts[d.Threads[i].PostId]
-		preview.MainPost = PostView{
-			post.Id, post.Thread, post.Title, post.Date, post.Content, make([]ReplyData, 0),
+		preview.MainPost = MainPostView{
+			post.Id, post.Thread, post.Title, post.Date, post.Content, make([]ReplyData, 0), 0,
 		}
 
 		preview.LastPostTime = post.Date
@@ -350,6 +367,9 @@ func handleViewForum(d *Database, w http.ResponseWriter, r *http.Request) {
 			lastPostTime = d.Posts[i].Date
 		}
 
+		f.Threads[index].AmountOfPosts++
+		f.Threads[index].MainPost.AmountOfPosts++
+
 		if f.Threads[index].MainPost.Id == d.Posts[i].Id {
 			continue
 		}
@@ -359,7 +379,6 @@ func handleViewForum(d *Database, w http.ResponseWriter, r *http.Request) {
 		if post.Date.After(f.Threads[index].LastPostTime) {
 			f.Threads[index].LastPostTime = post.Date
 		}
-
 		f.Threads[index].Posts = append(f.Threads[index].Posts, PostView{
 			post.Id, post.Thread, post.Title, post.Date, post.Content, make([]ReplyData, 0),
 		})
@@ -384,6 +403,18 @@ func handleViewForum(d *Database, w http.ResponseWriter, r *http.Request) {
 }
 
 var validPath = regexp.MustCompile("^/(thread|forum|create_post|create_thread)/([a-zA-Z0-9]+)$")
+
+// type AntiSpam struct {
+// 	p int
+// 	a int
+// 	b int
+// }
+
+// func generate_anti_spam(seed int) {
+// 	p := (seed + 1) % 19
+
+// 	return AntiSpam{(seed + 1) % 19, (seed + 5) % 19, (seed + 9) % 19}
+// }
 
 func main() {
 	var d = createDatabase()
