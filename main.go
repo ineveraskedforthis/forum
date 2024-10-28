@@ -231,7 +231,7 @@ func handleCreatePost(d *Database, w http.ResponseWriter, r *http.Request, threa
 		[]byte(r.FormValue("body")),
 	)
 
-	http.Redirect(w, r, "/thread/"+strconv.Itoa(int(thread.PostId)), http.StatusFound)
+	http.Redirect(w, r, "/forum/thread/"+strconv.Itoa(int(thread.PostId)), http.StatusFound)
 }
 
 func handleViewThread(d *Database, w http.ResponseWriter, r *http.Request, thread PostId) {
@@ -402,7 +402,7 @@ func handleViewForum(d *Database, w http.ResponseWriter, r *http.Request) {
 	t.ExecuteTemplate(w, "FORUM", f)
 }
 
-var validPath = regexp.MustCompile("^/(thread|forum|create_post|create_thread)/([a-zA-Z0-9]+)$")
+var validPath = regexp.MustCompile("^/(forum/thread|forum|forum/create_post|forum/create_thread)/([a-zA-Z0-9]+)$")
 
 // type AntiSpam struct {
 // 	p int
@@ -423,7 +423,7 @@ func main() {
 
 	// http.HandleFunc("/create_post", createPost)
 	http.HandleFunc("/forum/", func(w http.ResponseWriter, r *http.Request) { handleViewForum(&d, w, r) })
-	http.HandleFunc("/thread/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/forum/thread/", func(w http.ResponseWriter, r *http.Request) {
 		m := validPath.FindStringSubmatch(r.URL.Path)
 		if m == nil {
 			http.NotFound(w, r)
@@ -435,8 +435,8 @@ func main() {
 		}
 		handleViewThread(&d, w, r, PostId{uint32(raw_id)})
 	})
-	http.HandleFunc("/create_thread/", func(w http.ResponseWriter, r *http.Request) { handleCreateThread(&d, w, r) })
-	http.HandleFunc("/create_post/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/forum/create_thread/", func(w http.ResponseWriter, r *http.Request) { handleCreateThread(&d, w, r) })
+	http.HandleFunc("/forum/create_post/", func(w http.ResponseWriter, r *http.Request) {
 		m := validPath.FindStringSubmatch(r.URL.Path)
 		if m == nil {
 			http.NotFound(w, r)
@@ -448,8 +448,8 @@ func main() {
 		}
 		handleCreatePost(&d, w, r, PostId{uint32(raw_id)})
 	})
-	http.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir("css"))))
-	http.Handle("/js/", http.StripPrefix("/js/", http.FileServer(http.Dir("js"))))
+	http.Handle("/forum/css/", http.StripPrefix("/forum/css/", http.FileServer(http.Dir("css"))))
+	http.Handle("/forum/js/", http.StripPrefix("/forum/js/", http.FileServer(http.Dir("js"))))
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		{

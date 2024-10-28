@@ -1,7 +1,7 @@
 {{define "NEW_POST"}}
 <div class="new_post p-6 bg-white rounded-2xl">
     <h1 class="text-2xl font-bold mb-4">Create new post</h1>
-    <form action="/create_post/{{printf "%d" .PostId}}" method="POST" id="new_post_button" class="sm:auto lg:w-1/3">
+    <form action="/forum/create_post/{{printf "%d" .PostId}}" method="POST" id="new_post_button" class="sm:auto lg:w-1/3">
         <div class="mb-4">
             <input name="title" rows="1" class="w-full p-2 border border-gray-300 rounded focus:border-green-400 focus:outline-none" placeholder="Title"></input>
         </div>
