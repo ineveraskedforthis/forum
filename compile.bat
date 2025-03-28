@@ -1,1 +1,1 @@
-tsc js/main.ts --lib ES2022,dom
+tsc js/main.ts --lib ES2022,dom && tsc js/thread.ts --lib ES2022,dom

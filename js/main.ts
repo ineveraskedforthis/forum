@@ -1,5 +1,3 @@
-// window.onload = () => window.scrollTo(0, document.body.scrollHeight);
-
 let reply_buttons = document.querySelectorAll(".reply-button")
 
 reply_buttons.forEach((item) => {

@@ -108,6 +108,7 @@ var emptyTemplate = template.HTML("")
 var invalidId = PostId{math.MaxUint32}
 
 func transformBody(body []byte, id PostId, d *Database) []PostContent {
+
 	replies := make([]ReplyMark, 0)
 
 	// we are looking for reply string
@@ -191,6 +192,7 @@ func (d *Database) newPost(thread PostId, title string, body []byte) PostId {
 		return thread
 	}
 	id := d.newId()
+	body = body[:min(len(body), 1024*4)]
 	var post = Post{id, thread, title, time.Now(), transformBody(body, id, d)}
 	d.Posts = append(d.Posts, post)
 
@@ -199,6 +201,7 @@ func (d *Database) newPost(thread PostId, title string, body []byte) PostId {
 
 func (d *Database) newThread(title string, body []byte) PostId {
 	var new_id = d.newId()
+	body = body[:min(len(body), 1024*4)]
 	var post = Post{new_id, new_id, title, time.Now(), transformBody(body, new_id, d)}
 	d.Posts = append(d.Posts, post)
 	d.Threads = append(d.Threads, post.Id)
