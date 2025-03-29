@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"html/template"
 	"log"
@@ -84,6 +85,7 @@ type ForumView struct {
 
 type ThreadView struct {
 	MainPost MainPostView
+	LastPost PostId
 	Thread   []PostView
 	DB       *Database
 }
@@ -237,24 +239,7 @@ func handleCreatePost(d *Database, w http.ResponseWriter, r *http.Request, threa
 	http.Redirect(w, r, "/forum/thread/"+strconv.Itoa(int(thread.PostId)), http.StatusFound)
 }
 
-func handleViewThread(d *Database, w http.ResponseWriter, r *http.Request, thread PostId) {
-	{
-		css, _ := template.ParseFiles("templates/cssjs.html")
-		css.Execute(w, 0)
-	}
-
-	t, error := template.ParseFiles(
-		"templates/post_link.html",
-		"templates/main_post.html",
-		"templates/post.html",
-		"templates/create_post.html",
-		"templates/thread.html",
-	)
-
-	if error != nil {
-		fmt.Print(error)
-	}
-
+func prepareThreadView(d *Database, thread PostId) ThreadView {
 	var th ThreadView
 
 	th.DB = d
@@ -270,6 +255,7 @@ func handleViewThread(d *Database, w http.ResponseWriter, r *http.Request, threa
 				post.Id, post.Thread, post.Title, post.Date, post.Content, make([]ReplyData, 0),
 			}
 			th.Thread = append(th.Thread, postView)
+			th.LastPost = post.Id
 			count++
 		}
 	}
@@ -291,7 +277,28 @@ func handleViewThread(d *Database, w http.ResponseWriter, r *http.Request, threa
 	th.MainPost = MainPostView{temp.Id, temp.Thread, temp.Title, temp.Date, temp.Content, temp.Replies, count}
 	th.Thread = th.Thread[1:]
 
-	t.ExecuteTemplate(w, "THREAD", th)
+	return th
+}
+
+func handleViewThread(d *Database, w http.ResponseWriter, r *http.Request, thread PostId) {
+	{
+		css, _ := template.ParseFiles("templates/cssjs.html")
+		css.Execute(w, 0)
+	}
+
+	t, error := template.ParseFiles(
+		"templates/post_link.html",
+		"templates/main_post.html",
+		"templates/post.html",
+		"templates/create_post.html",
+		"templates/thread.html",
+	)
+
+	if error != nil {
+		fmt.Print(error)
+	}
+
+	t.ExecuteTemplate(w, "THREAD", prepareThreadView(d, thread))
 }
 
 func handleCreateThread(d *Database, w http.ResponseWriter, r *http.Request) {
@@ -425,6 +432,36 @@ func main() {
 	generatePosts(&d)
 
 	// http.HandleFunc("/create_post", createPost)
+
+	http.HandleFunc("/fetch_posts/", func(w http.ResponseWriter, r *http.Request) {
+		thread_main_post := r.URL.Query().Get("thread")
+		thread_last_post := r.URL.Query().Get("last_post")
+		thread_roll, error := template.ParseFiles(
+			"templates/post_link.html",
+			"templates/main_post.html",
+			"templates/post.html",
+			"templates/thread_roll.html",
+		)
+		if error != nil {
+			fmt.Print(error)
+			return
+		}
+		if thread_main_post != "" && thread_last_post != "" {
+			var html_buffer bytes.Buffer
+			var thread, error_conversion = strconv.Atoi(thread_main_post)
+			if error_conversion != nil {
+				fmt.Print(error_conversion)
+				return
+			}
+			error := thread_roll.ExecuteTemplate(&html_buffer, "THREAD_ROLL", prepareThreadView(&d, PostId{uint32(thread)}))
+			if error != nil {
+				fmt.Print(error)
+				return
+			}
+			var template_string = []byte(html_buffer.String())
+			w.Write(template_string)
+		}
+	})
 	http.HandleFunc("/forum/", func(w http.ResponseWriter, r *http.Request) { handleViewForum(&d, w, r) })
 	http.HandleFunc("/forum/thread/", func(w http.ResponseWriter, r *http.Request) {
 		m := validPath.FindStringSubmatch(r.URL.Path)

@@ -13,6 +13,11 @@
   <div class="message control">{{template "NEW_POST" .MainPost.Id}}</div>
 </div>
 
+<script type="text/javascript">
+  var thread_id = {{.MainPost.Id.PostId}};
+  var last_post_id = {{.LastPost.PostId}};
+</script>`
+
 <script src="/forum/js/main.js" defer></script>
 <script src="/forum/js/thread.js" defer></script>
 {{end}}
