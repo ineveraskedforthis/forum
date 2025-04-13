@@ -22,11 +22,13 @@
 
 .workers-grid > div {
     text-align: center;
+    margin: 5%;
+    padding: 5%;
 }
 
 .buildings-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
 }
 
 .buildings-grid > div {

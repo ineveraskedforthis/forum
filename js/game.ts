@@ -17,95 +17,88 @@ namespace commodity {
     export const magic_tools = 13
     export const bricks = 14
     export const clay = 15
-    export const total = 16
+    export const corpses = 16
+    export const essence = 17
+    export const total = 18
 }
 
 interface commodity_data {
     name: string,
-    base_spendings: number,
-    base_production: number
+    base_spendings: number
 }
 
 const commodity_definition: commodity_data[] = []
 commodity_definition[commodity.coins] = {
     name: "Coins",
     base_spendings: 0,
-    base_production: 0
 }
 commodity_definition[commodity.fluids] = {
     name: "Fluids",
     base_spendings: 1000,
-    base_production: 5
 }
 commodity_definition[commodity.blood] = {
     name: "Blood",
     base_spendings: 1000,
-    base_production: 10
 }
 commodity_definition[commodity.water] = {
     name: "Water",
     base_spendings: 10,
-    base_production: 100
 }
 commodity_definition[commodity.weapons] = {
     name: "Weapons",
     base_spendings: 5000,
-    base_production: 1000
 }
 commodity_definition[commodity.enchanted_weapons] = {
     name: "Enchanted Weapons",
     base_spendings: 10000,
-    base_production: 100
 }
 commodity_definition[commodity.magic_crystals] = {
     name: "Magic crystals",
-    base_spendings: 1000,
-    base_production: 10
+    base_spendings: 10000,
 }
 commodity_definition[commodity.ore] = {
     name: "Ore",
     base_spendings: 20000,
-    base_production: 10000
 }
 commodity_definition[commodity.ingot] = {
     name: "Ingots",
-    base_spendings: 20000,
-    base_production: 1000
+    base_spendings: 40000,
 }
 commodity_definition[commodity.coal] = {
     name: "Coal",
     base_spendings: 20000,
-    base_production: 10000
 }
 commodity_definition[commodity.anvil] = {
     name: "Anvil",
     base_spendings: 2200,
-    base_production: 100
 }
 commodity_definition[commodity.pickaxe] = {
     name: "Pickaxe",
     base_spendings: 2000,
-    base_production: 100
 }
 commodity_definition[commodity.shovel] = {
     name: "Shovel",
     base_spendings: 2000,
-    base_production: 100
 }
 commodity_definition[commodity.magic_tools] = {
     name: "Magic Tools",
     base_spendings: 1000000,
-    base_production: 10
 }
 commodity_definition[commodity.bricks] = {
     name: "Bricks",
-    base_spendings: 10000,
-    base_production: 1000
+    base_spendings: 1000,
 }
 commodity_definition[commodity.clay] = {
     name: "Clay",
-    base_spendings: 10000,
-    base_production: 1000
+    base_spendings: 100,
+}
+commodity_definition[commodity.corpses] = {
+    name: "Corpses",
+    base_spendings: 100
+}
+commodity_definition[commodity.essence] = {
+    name: "Essence",
+    base_spendings: 10000
 }
 
 const inventory: number[] = [];
@@ -149,25 +142,25 @@ function init_inventory_frame() {
 
         let have = document.createElement("div")
         have.id = "inv" + i
-        have.innerHTML = "Have: " + inventory[i]
+        have.innerHTML = "Have: " + inventory[i].toFixed(2)
 
         let trade_div = document.createElement("div")
         trade_div.id = "trade" + i
-        trade_div.innerHTML = "Trade: " + trade[i]
+        trade_div.innerHTML = "Trade: " + trade[i].toFixed(2)
 
         let button_increase_trade = document.createElement("div");
         button_increase_trade.classList.add("button")
         button_increase_trade.innerHTML = "Buy more";
-        button_increase_trade.onclick = trade_change(i, 1)
+        button_increase_trade.onclick = trade_change(i, 0.1)
 
         let button_decrease_trade = document.createElement("div");
         button_decrease_trade.classList.add("button")
         button_decrease_trade.innerHTML = "Sell more";
-        button_decrease_trade.onclick = trade_change(i, -1)
+        button_decrease_trade.onclick = trade_change(i, -0.1)
 
         let price_div = document.createElement("div")
         price_div.id = "price" + i
-        price_div.innerHTML = "Price: " + price[i]
+        price_div.innerHTML = "Price: " + price[i].toFixed(2)
 
         frame.appendChild(item)
         item.appendChild(label)
@@ -182,13 +175,13 @@ function init_inventory_frame() {
 function update_inventory_frame() {
     for (let i = 0; i < commodity.total; i++) {
         let have = document.getElementById("inv" + i)!
-        have.innerHTML = "Have: " + inventory[i]
+        have.innerHTML = "Have: " + inventory[i].toFixed(2)
 
         let trade_div = document.getElementById("trade" + i)!
-        trade_div.innerHTML = "Trade: " + trade[i]
+        trade_div.innerHTML = "Trade: " + trade[i].toFixed(2)
 
         let price_div = document.getElementById("price" + i)!
-        price_div.innerHTML = "Price: " + price[i]
+        price_div.innerHTML = "Price: " + price[i].toFixed(2)
     }
 }
 
@@ -229,7 +222,8 @@ namespace skills {
     export const smith = 3
     export const magesmith = 4
     export const movement = 5
-    export const total = 6
+    export const hunting = 6
+    export const total = 7
 }
 
 const skill_names = {}
@@ -238,6 +232,8 @@ skill_names[skills.enchanting] = "enchanting"
 skill_names[skills.smelting] = "smelting"
 skill_names[skills.smith] = "smith"
 skill_names[skills.magesmith] = "magesmith"
+skill_names[skills.movement] = "movement"
+skill_names[skills.hunting] = "hunting"
 
 function base_skill () {
     let result: number[] = []
@@ -256,6 +252,7 @@ interface building_definition {
     strength_multiplier: number
     vitality_multiplier: number
     magic_multiplier: number
+    fluids_multiplier: number
 
     skill: number
 }
@@ -267,6 +264,7 @@ interface character {
     strength: number
     vitality: number
     magic: number
+    fluids: number
     trust: number
     desired_wage: number
     rarity: number
@@ -281,6 +279,7 @@ const player: character = {
     strength: 1,
     vitality: 0,
     magic: 1,
+    fluids: 0,
     trust: 100,
     desired_wage: 0,
     rarity: 0,
@@ -295,6 +294,7 @@ const imp: character = {
     strength: 2,
     vitality: 2,
     magic: 1,
+    fluids: 0,
     trust: 0,
     desired_wage: 1,
     rarity: 10,
@@ -310,6 +310,7 @@ const minor_imp: character = {
     strength: 1,
     vitality: 1,
     magic: 0,
+    fluids: 0,
     trust: 0,
     desired_wage: 1,
     rarity: 5,
@@ -325,6 +326,7 @@ const minor_eyeful: character = {
     strength: 0,
     vitality: 0,
     magic: 2,
+    fluids: 0,
     trust: 0,
     desired_wage: 1,
     rarity: 10,
@@ -338,6 +340,7 @@ const slime_black: character = {
     portrait: "../images/slime_black.png",
     strength: 0,
     vitality: 2,
+    fluids: 10,
     magic: 0,
     trust: 0,
     desired_wage: 1,
@@ -353,6 +356,7 @@ const deel_rub: character = {
     strength: 1,
     vitality: 1,
     magic: 3,
+    fluids: 1,
     trust: 0,
     desired_wage: 10,
     rarity: 50,
@@ -361,6 +365,7 @@ const deel_rub: character = {
 }
 deel_rub.skills[skills.smelting] = 20
 deel_rub.skills[skills.smith] = 20
+deel_rub.skills[skills.magesmith] = 5
 
 const deel_sar: character = {
     id: 6,
@@ -369,6 +374,7 @@ const deel_sar: character = {
     strength: 2,
     vitality: 1,
     magic: 4,
+    fluids: 1,
     trust: 0,
     desired_wage: 10,
     rarity: 100,
@@ -377,14 +383,16 @@ const deel_sar: character = {
 }
 deel_sar.skills[skills.smelting] = 20
 deel_sar.skills[skills.smith] = 40
+deel_sar.skills[skills.magesmith] = 5
 
 const marela: character = {
     id: 7,
-    name: "Deel'Sar",
+    name: "Mar'Ela",
     portrait: "../images/mar'ela.png",
     strength: 1,
     vitality: 1,
     magic: 6,
+    fluids: 2,
     trust: 0,
     desired_wage: 10,
     rarity: 100,
@@ -392,6 +400,103 @@ const marela: character = {
     skills: base_skill()
 }
 marela.skills[skills.magesmith] = 50
+
+const imp_major: character = {
+    id: 8,
+    name: "Major Horned Imp",
+    portrait: "../images/imp_major.png",
+    strength: 5,
+    vitality: 5,
+    magic: 1,
+    fluids: 0,
+    trust: 0,
+    desired_wage: 10,
+    rarity: 50,
+
+    skills: base_skill()
+}
+imp_major.skills[skills.mining] = 50
+imp_major.skills[skills.smith] = 50
+imp_major.skills[skills.smelting] = 50
+
+const qab_etua: character = {
+    id: 9,
+    name: "Qab'Etua",
+    portrait: "../images/qab'etua.png",
+    strength: 2,
+    vitality: 5,
+    magic: 5,
+    fluids: 3,
+    trust: 0,
+    desired_wage: 10,
+    rarity: 200,
+
+    skills: base_skill()
+}
+qab_etua.skills[skills.enchanting] = 100
+qab_etua.skills[skills.magesmith] = 100
+
+const imp_minor: character = {
+    id: 10,
+    name: "Minor Imp",
+    portrait: "../images/imp_minor.png",
+    strength: 1,
+    vitality: 1,
+    magic: 0,
+    fluids: 0,
+    trust: 0,
+    desired_wage: 1,
+    rarity: 10,
+
+    skills: base_skill()
+}
+
+const terrom: character = {
+    id: 11,
+    name: "Ter'Rom",
+    portrait: "../images/ter'rom.png",
+    strength: 5,
+    vitality: 3,
+    magic: 0,
+    fluids: 0,
+    trust: 0,
+    desired_wage: 50,
+    rarity: 50,
+
+    skills: base_skill()
+}
+terrom.skills[skills.movement] = 50
+terrom.skills[skills.hunting] = 60
+
+const tersia: character = {
+    id: 12,
+    name: "Ter'Sia",
+    portrait: "../images/ter'sia.png",
+    strength: 0,
+    vitality: 0,
+    magic: 1,
+    fluids: 0,
+    trust: 0,
+    desired_wage: 1,
+    rarity: 5,
+
+    skills: base_skill()
+}
+tersia.skills[skills.enchanting] = 20
+
+const terpim: character = {
+    id: 13,
+    name: "Ter'Pim",
+    portrait: "../images/ter'pim.png",
+    strength: 0.1,
+    vitality: 0.1,
+    magic: 0.1,
+    fluids: 0,
+    trust: 0,
+    desired_wage: 1,
+    rarity: 5,
+    skills: base_skill()
+}
 
 function build_worker_frame(item : character) {
     let entry = document.createElement("div");
@@ -416,6 +521,7 @@ function build_worker_frame(item : character) {
     entry.appendChild(new_label("Strength: " + item.strength))
     entry.appendChild(new_label("Vitality: " + item.vitality))
     entry.appendChild(new_label("Magic: " + item.magic))
+    entry.appendChild(new_label("Fluids: " + item.fluids))
 
     for (let i = 0; i < skills.total; i++) {
         let skill_label = new_label(skill_names[i] + ": " + item.skills[i])
@@ -431,7 +537,19 @@ function build_worker_frame(item : character) {
 const workers = [player]
 var selected_worker = player
 
-const daemons_pool = [minor_imp, imp, deel_rub, deel_sar]
+const daemons_pool = [
+    minor_imp,
+    imp,
+    deel_rub,
+    deel_sar,
+    marela,
+    imp_major,
+    qab_etua,
+    imp_minor,
+    terrom,
+    tersia,
+    terpim
+]
 
 function new_worker(character: character) {
     for (let item of workers) {
@@ -483,7 +601,18 @@ function update_workers_list() {
     }
 }
 
-const coal_mine: building_definition = {
+function update_skills() {
+    for (let item of workers) {
+        for (let i = 0; i < skills.total; i++) {
+            let e = document.getElementById("skill_"+i + "_" + item.id)!
+            e.innerHTML = skill_names[i] + ": " + item.skills[i]
+        }
+    }
+}
+
+namespace buildings {
+
+export const coal_mine: building_definition = {
     name: "Coal Mine",
     inputs: [],
     tools: [
@@ -498,10 +627,11 @@ const coal_mine: building_definition = {
     strength_multiplier: 1,
     vitality_multiplier: 1,
     magic_multiplier: 1,
+    fluids_multiplier: 0,
     skill: skills.mining
 }
 
-const ore_mine: building_definition = {
+export const ore_mine: building_definition = {
     name: "Ore Mine",
     inputs: [],
     tools: [
@@ -516,10 +646,11 @@ const ore_mine: building_definition = {
     strength_multiplier: 1,
     vitality_multiplier: 1,
     magic_multiplier: 1,
+    fluids_multiplier: 0,
     skill: skills.mining
 }
 
-const smelter: building_definition = {
+export const smelter: building_definition = {
     name: "Smelter",
     inputs: [
         {commodity: commodity.coal, amount: 1},
@@ -537,12 +668,14 @@ const smelter: building_definition = {
     strength_multiplier: 1,
     vitality_multiplier: 0,
     magic_multiplier: 1,
+    fluids_multiplier: 0,
     skill: skills.smelting
 }
 
-const magesmith : building_definition = {
+export const magesmith : building_definition = {
     name: "Magesmith",
     inputs: [
+        {commodity: commodity.essence, amount: 1},
         {commodity: commodity.ingot, amount: 1}
     ],
     tools: [
@@ -557,10 +690,11 @@ const magesmith : building_definition = {
     strength_multiplier: 0,
     vitality_multiplier: 0,
     magic_multiplier: 1,
+    fluids_multiplier: 0,
     skill: skills.magesmith
 }
 
-const well: building_definition = {
+export const well: building_definition = {
     name: "Well",
     inputs: [
 
@@ -577,15 +711,122 @@ const well: building_definition = {
     strength_multiplier: 1,
     vitality_multiplier: 0,
     magic_multiplier: 0,
+    fluids_multiplier: 0,
     skill: skills.movement
 }
 
-const condensor: building_definition = {
-    name: "Magic Condensor",
+export const blood_extractor: building_definition = {
+    name: "Blood Extractor",
     inputs: [
-        {commodity: commodity.water, amount: 100}
     ],
     tools: [
+        {commodity: commodity.magic_tools, amount: 1}
+    ],
+    outputs: [
+        {commodity: commodity.blood, amount: 1}
+    ],
+    cost: [
+        {commodity: commodity.magic_tools, amount: 1}
+    ],
+    strength_multiplier: 0,
+    vitality_multiplier: 1,
+    magic_multiplier: 0,
+    fluids_multiplier: 0,
+    skill: skills.movement
+}
+
+export const blender: building_definition = {
+    name: "Blender",
+    inputs: [
+        {commodity: commodity.corpses, amount: 1}
+    ],
+    tools: [
+        {commodity: commodity.magic_tools, amount: 1}
+    ],
+    outputs: [
+        {commodity: commodity.blood, amount: 10}
+    ],
+    cost: [
+        {commodity: commodity.magic_tools, amount: 1}
+    ],
+    strength_multiplier: 1,
+    vitality_multiplier: 0,
+    magic_multiplier: 0,
+    fluids_multiplier: 0,
+    skill: skills.movement
+}
+
+export const hunting_0: building_definition = {
+    name: "Hunting Grounds",
+    inputs: [
+    ],
+    tools: [
+        {commodity: commodity.weapons, amount: 1}
+    ],
+    outputs: [
+        {commodity: commodity.corpses, amount: 1}
+    ],
+    cost: [
+        {commodity: commodity.weapons, amount: 1}
+    ],
+    strength_multiplier: 1,
+    vitality_multiplier: 0,
+    magic_multiplier: 1,
+    fluids_multiplier: 0,
+    skill: skills.hunting
+}
+
+export const hunting_1: building_definition = {
+    name: "Enchanted Hunting Grounds",
+    inputs: [
+    ],
+    tools: [
+        {commodity: commodity.enchanted_weapons, amount: 1}
+    ],
+    outputs: [
+        {commodity: commodity.corpses, amount: 2}
+    ],
+    cost: [
+        {commodity: commodity.enchanted_weapons, amount: 1}
+    ],
+    strength_multiplier: 1,
+    vitality_multiplier: 0,
+    magic_multiplier: 1,
+    fluids_multiplier: 0,
+    skill: skills.hunting
+}
+
+export const essence_mixer: building_definition = {
+    name: "Essence Mixer",
+    inputs: [
+        {commodity: commodity.water, amount: 1},
+        {commodity: commodity.blood, amount: 1},
+        {commodity: commodity.fluids, amount: 1}
+    ],
+    tools: [
+        {commodity: commodity.magic_tools, amount: 1}
+    ],
+    outputs: [
+        {commodity: commodity.essence, amount: 1}
+    ],
+    cost: [
+        {commodity: commodity.magic_tools, amount: 1}
+    ],
+    strength_multiplier: 0,
+    vitality_multiplier: 0,
+    magic_multiplier: 1,
+    fluids_multiplier: 0,
+    skill: skills.enchanting
+}
+
+export const condensor: building_definition = {
+    name: "Magic Condensor",
+    inputs: [
+        {commodity: commodity.water, amount: 1},
+        {commodity: commodity.essence, amount: 1}
+    ],
+    tools: [
+        {commodity: commodity.magic_tools, amount: 1}
     ],
     outputs: [
         {commodity: commodity.magic_crystals, amount: 1}
@@ -596,9 +837,109 @@ const condensor: building_definition = {
     strength_multiplier: 0,
     vitality_multiplier: 0,
     magic_multiplier: 1,
+    fluids_multiplier: 0,
     skill: skills.enchanting
 }
 
+export const fluids_extractor: building_definition = {
+    name: "Fluids Extractor",
+    inputs: [
+        {commodity: commodity.water, amount: 1}
+    ],
+    tools: [
+    ],
+    outputs: [
+        {commodity: commodity.fluids, amount: 1}
+    ],
+    cost: [
+        {commodity: commodity.magic_tools, amount: 1}
+    ],
+    strength_multiplier: 0,
+    vitality_multiplier: 0,
+    magic_multiplier: 0,
+    fluids_multiplier: 1,
+    skill: skills.movement
+}
+
+export const weaponsmith: building_definition = {
+    name: "Weaponsmith",
+    inputs: [
+        {commodity: commodity.ingot, amount: 1}
+    ],
+    tools: [
+        {commodity: commodity.anvil, amount: 1}
+    ],
+    outputs: [
+        {commodity: commodity.weapons, amount: 1}
+    ],
+    cost: [
+        {commodity: commodity.anvil, amount: 1}
+    ],
+    strength_multiplier: 1,
+    vitality_multiplier: 0,
+    magic_multiplier: 0,
+    fluids_multiplier: 0,
+    skill: skills.smith
+}
+
+export const enchanting: building_definition = {
+    name: "Enchancing Shop",
+    inputs: [
+        {commodity: commodity.weapons, amount: 1},
+        {commodity: commodity.essence, amount: 1}
+    ],
+    tools: [
+        {commodity: commodity.magic_tools, amount: 1}
+    ],
+    outputs: [
+        {commodity: commodity.enchanted_weapons, amount: 1}
+    ],
+    cost: [
+        {commodity: commodity.magic_tools, amount: 1}
+    ],
+    strength_multiplier: 0,
+    vitality_multiplier: 0,
+    magic_multiplier: 1,
+    fluids_multiplier: 0,
+    skill: skills.enchanting
+}
+}
+
+interface base_production_scale {
+    def: building_definition
+    scale: number
+}
+
+const base_production : base_production_scale [] = [
+    {
+        def: buildings.coal_mine,
+        scale: 0
+    },
+    {
+        def: buildings.ore_mine,
+        scale: 0
+    },
+    {
+        def: buildings.smelter,
+        scale: 0
+    },
+    {
+        def: buildings.well,
+        scale: 0
+    },
+    {
+        def: buildings.condensor,
+        scale: 0
+    },
+    {
+        def: buildings.magesmith,
+        scale: 0
+    },
+    {
+        def: buildings.essence_mixer,
+        scale: 0
+    }
+]
 
 interface building{
     id: number
@@ -633,7 +974,7 @@ function new_building(def: building_definition): number {
     property_vacant_id++
     return property_vacant_id
 }
-new_building(ore_mine)
+new_building(buildings.ore_mine)
 
 function build_new_building(def: building_definition): number|undefined {
     let enough_goods = true;
@@ -668,6 +1009,7 @@ function div_building_definition(def: building_definition) {
     stats.appendChild(new_label("Strength " + def.strength_multiplier))
     stats.appendChild(new_label("Vitality " + def.vitality_multiplier))
     stats.appendChild(new_label("Magic " + def.magic_multiplier))
+    stats.appendChild(new_label("Fluids " + def.fluids_multiplier))
     frame.appendChild(stats)
 
     let button = document.createElement("div")
@@ -680,19 +1022,45 @@ function div_building_definition(def: building_definition) {
 }
 
 function update() {
+    local_supply.fill(100, 0, commodity.total)
     //decay inventory and set baseline demand/supply:
     for (let i = 0; i < commodity.total; i++) {
-        let decay = Math.floor(0.0001 * inventory[i])
-        if (decay == 0) {
-            if (Math.random() < 0.0001 * inventory[i]) {
-                decay = 1
-            }
+        if (i == commodity.magic_crystals) {
+            continue;
         }
+        let decay = 0.0001 * inventory[i]
         inventory[i] -= decay
         inventory[i] = Math.max(0, inventory[i])
-
+    }
+    for (let i = 0; i < commodity.total; i++) {
         local_demand[i] = commodity_definition[i].base_spendings / price[i]
-        local_supply[i] = commodity_definition[i].base_production * (1 + price[i] / 100)
+    }
+
+    for (let item of base_production) {
+        let profit_estimation = 0
+        for (let input of item.def.inputs) {
+            profit_estimation = profit_estimation - input.amount * price[input.commodity]
+        }
+        for (let output of item.def.outputs) {
+            profit_estimation = profit_estimation + output.amount * price[output.commodity]
+        }
+
+        item.scale += profit_estimation
+
+        item.scale = Math.min(item.scale, 100)
+        item.scale = Math.max(item.scale, 0)
+    }
+
+    for (let item of base_production) {
+        for (let input of item.def.inputs) {
+            local_demand[input.commodity] += input.amount * item.scale
+        }
+        for (let input of item.def.tools) {
+            local_demand[input.commodity] += input.amount * 0.1
+        }
+        for (let output of item.def.outputs) {
+            local_supply[output.commodity] += output.amount * item.scale
+        }
     }
 
     // try to buy/sell
@@ -714,12 +1082,11 @@ function update() {
     }
 
     // change prices
-    for (let i = 0; i < commodity.total; i++) {
-        if (local_demand[i] < local_supply[i]) {
-            price[i] = Math.max(1, price[i] - 1)
-        } else {
-            price[i] = price[i] + 1
-        }
+    for (let i = 1; i < commodity.total; i++) {
+        let balance = local_demand[i] - local_supply[i]
+        price[i] += balance / 10000 * price[i]
+
+        price[i] = Math.max(price[i], 0.001)
     }
 
     const reserved_inventory: number[] = [];;
@@ -728,10 +1095,17 @@ function update() {
     for (let building of property) {
         let worker = building_to_worker.get(building.id)
         if (!worker) continue;
+
+        let skill = worker.skills[building.definition.skill];
+        if (Math.random() * 10 > skill) {
+            worker.skills[building.definition.skill]++;
+        }
+
         let max_throughput =
             building.definition.magic_multiplier * worker.magic
             + building.definition.strength_multiplier * worker.strength
             + building.definition.vitality_multiplier * worker.vitality
+            + building.definition.fluids_multiplier * worker.fluids
 
         let have_tools = true
         for (let item of building.definition.tools) {
@@ -742,7 +1116,7 @@ function update() {
         if (have_tools) {
             max_throughput = max_throughput * 2;
         }
-        max_throughput = max_throughput * 0.1 + worker.skills[building.definition.skill] * 0.01
+        max_throughput = max_throughput * (0.01 + worker.skills[building.definition.skill] * 0.01)
 
         let input_multiplier = 1
         for (let item of building.definition.inputs) {
@@ -753,20 +1127,19 @@ function update() {
         max_throughput = max_throughput * input_multiplier
 
         for (let item of building.definition.inputs) {
-            const spent = Math.round(item.amount * max_throughput + 0.5)
+            const spent = item.amount * max_throughput
             inventory[item.commodity] -= spent
             inventory[item.commodity] = Math.max(0, inventory[item.commodity])
         }
         for (let item of building.definition.outputs) {
             const produced = item.amount * max_throughput
-            inventory[item.commodity] += Math.floor(produced)
-            if (Math.random() < produced - Math.floor(produced)) {
-                inventory[item.commodity] += 1
+            inventory[item.commodity] += produced
+        }
+        if (have_tools)
+            for (let item of building.definition.tools) {
+                inventory[item.commodity] -= item.amount * 0.1
+                reserved_inventory[item.commodity] += item.amount * 0.9
             }
-        }
-        for (let item of building.definition.tools) {
-            reserved_inventory[item.commodity] += item.amount * max_throughput
-        }
     }
 }
 
@@ -802,9 +1175,9 @@ function update_property_list() {
         }
 
         frame.appendChild(row)
-        frame.appendChild(hire_button)
-        frame.appendChild(worker_div)
-        if (image_div) frame.appendChild(image_div)
+        row.appendChild(hire_button)
+        row.appendChild(worker_div)
+        if (image_div) row.appendChild(image_div)
     }
 }
 
@@ -822,12 +1195,20 @@ window.onload = () => {
             return;
         }
 
-        frame.appendChild(div_building_definition(ore_mine));
-        frame.appendChild(div_building_definition(coal_mine));
-        frame.appendChild(div_building_definition(smelter));
-        frame.appendChild(div_building_definition(magesmith));
-        frame.appendChild(div_building_definition(well));
-        frame.appendChild(div_building_definition(condensor));
+        frame.appendChild(div_building_definition(buildings.ore_mine));
+        frame.appendChild(div_building_definition(buildings.coal_mine));
+        frame.appendChild(div_building_definition(buildings.smelter));
+        frame.appendChild(div_building_definition(buildings.magesmith));
+        frame.appendChild(div_building_definition(buildings.well));
+        frame.appendChild(div_building_definition(buildings.condensor));
+        frame.appendChild(div_building_definition(buildings.blender));
+        frame.appendChild(div_building_definition(buildings.blood_extractor));
+        frame.appendChild(div_building_definition(buildings.essence_mixer));
+        frame.appendChild(div_building_definition(buildings.fluids_extractor));
+        frame.appendChild(div_building_definition(buildings.hunting_0));
+        frame.appendChild(div_building_definition(buildings.hunting_1));
+        frame.appendChild(div_building_definition(buildings.weaponsmith));
+        frame.appendChild(div_building_definition(buildings.enchanting));
     }
 
     document.getElementById("gacha-button")!.onclick = pull_daemon_characters
@@ -846,6 +1227,7 @@ window.onload = () => {
             update_timer -= 100
             update()
             update_inventory_frame()
+            update_skills()
         }
         start = timestamp
         window.requestAnimationFrame(callback)
