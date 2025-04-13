@@ -488,8 +488,26 @@ func main() {
 		}
 		handleCreatePost(&d, w, r, PostId{uint32(raw_id)})
 	})
+	http.HandleFunc("/forum/game/", func(w http.ResponseWriter, r *http.Request) {
+		{
+			css, error := template.ParseFiles("templates/cssjs.html")
+			css.Execute(w, 0)
+
+			if error != nil {
+				fmt.Print(error)
+			}
+		}
+		t, error := template.ParseFiles(
+			"templates/game.html",
+		)
+		if error != nil {
+			fmt.Print(error)
+		}
+		t.Execute(w, 0)
+	})
 	http.Handle("/forum/css/", http.StripPrefix("/forum/css/", http.FileServer(http.Dir("css"))))
 	http.Handle("/forum/js/", http.StripPrefix("/forum/js/", http.FileServer(http.Dir("js"))))
+	http.Handle("/forum/images/", http.StripPrefix("/forum/images/", http.FileServer(http.Dir("images"))))
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		{
