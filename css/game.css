@@ -10,6 +10,16 @@
     margin-bottom: 5px;
 }
 
+.central_text {
+    text-align: center;
+    margin: auto
+}
+
+.negotiation-grid {
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+}
+
 .selected-worker {
     border-width: 4px;
     border-color: coral;
